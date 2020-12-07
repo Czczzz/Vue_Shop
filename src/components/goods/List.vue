@@ -32,12 +32,39 @@
         <el-table-column label="操作" width="130">
           <template slot-scope="scope">
             <div>
-              <el-button type="primary" size="mini" icon="el-icon-edit"></el-button>
-              <el-button type="danger" size="mini" icon="el-icon-delete"    @click="removeById(scope.row.goods_id)"></el-button>
+              <el-button type="primary" size="mini" icon="el-icon-edit" @click="showEditDialog(scope.row.id)"></el-button>
+              <el-button type="danger" size="mini" icon="el-icon-delete" @click="removeById(scope.row.goods_id)"></el-button>
             </div>
           </template>
         </el-table-column>
       </el-table>
+      <!-- 修改的对话框 -->
+      <el-dialog
+         title="提示"
+         :visible.sync="editDialogVisible"
+        width="50%"
+        >
+       <el-form
+        :model="editForm"
+        :rules="editFormRules"
+        ref="editFormRef"
+        label-width="90px"
+      >
+        <el-form-item label="商品名称" prop="goods_name">
+          <el-input v-model="editForm.goods_name"></el-input>
+        </el-form-item>
+        <el-form-item label="商品价格" prop="goods_price">
+          <el-input v-model="editForm.goods_price"></el-input>
+        </el-form-item>
+         <el-form-item label="商品重量" prop="goods_weight">
+          <el-input v-model="editForm.goods_weight"></el-input>
+        </el-form-item>
+      </el-form>
+        <span slot="footer" class="dialog-footer">
+        <el-button @click=" editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click=" editDialogVisible = false">确 定</el-button>
+        </span>
+</el-dialog>
         <!-- 分页 -->
       <el-pagination
         @size-change="handleSizeChange"
@@ -66,7 +93,25 @@ export default {
       // 商品列表
       goodslist: [],
       // 总数据条数
-      total: 0
+      total: 0,
+      // 控制修改用户对话框的显示与隐藏
+      editDialogVisible: false,
+      editForm: {
+        goods_name: '',
+        goods_price: '',
+        goods_weight: ''
+      },
+      editFormRules: {
+        goods_name: [
+          { required: true, message: '请输入商品名称', trigger: 'blur' }
+        ],
+        goods_price: [
+          { required: true, message: '请输入商品价格', trigger: 'blur' }
+        ],
+        goods_weight: [
+          { required: true, message: '请输入商品重量', trigger: 'blur' }
+        ]
+      }
     }
   },
   created () {
@@ -93,6 +138,16 @@ export default {
     handleCurrentChange (newPage) {
       this.queryInfo.pagenum = newPage
       this.getGoodsList()
+    },
+    // 展示编辑用户的对话框
+    async showEditDialog (id) {
+      const { data: res } = await this.$http.get('/goods/' + id)
+      if (res.meta.status !== 200) {
+        return this.$message.error('查询角色信息失败')
+      }
+      this.editForm = res.data
+      // console.log(this.editForm)
+      this.editDialogVisible = true
     },
     // 根据ID删除该条商品
     async removeById (id) {

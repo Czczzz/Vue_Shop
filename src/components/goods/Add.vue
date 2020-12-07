@@ -234,27 +234,38 @@ export default {
     // 编写点击事件完成商品添加
     add () {
       this.$refs.addFormRef.validate(async valid => {
-        if (!valid) return this.$message.error('请填写必要的表单项!')
-        // 将addForm进行深拷贝，避免goods_cat数组转换字符串之后导致级联选择器报错
-        const form = _.cloneDeep(this.addForm)
-        // 将goods_cat从数组转换为"1,2,3"字符串形式
-        form.goods_cat = form.goods_cat.join(',')
-        // 处理attrs数组，数组中需要包含商品的动态参数和静态属性
-        //  将manyTableData（动态参数）处理添加到attrs
-        this.manyTableData.forEach(item => {
-          form.attrs.push({ attr_id: item.attr_id, attr_value: item.attr_vals.join(' ') })
-        })
-        //   将onlyTableData（静态属性）处理添加到attrs
-        this.onlyTableData.forEach(item => {
-          form.attrs.push({ attr_id: item.attr_id, attr_value: item.attr_vals })
-        })
-        // 发送请求完成商品的添加,商品名称必须是唯一的
-        const { data: res } = await this.$http.post('goods', form)
-        if (res.meta.status !== 201) {
-          return this.$message.error('添加商品失败')
+        if (!valid) {
+          return this.$message.error('请填写必要的表单项！')
         }
-        this.$message.success('添加商品成功')
-        // 编程式导航跳转到商品列表
+        // 执行添加的业务逻辑
+        // lodash   cloneDeep(obj)
+        const form = _.cloneDeep(this.addForm)
+        form.goods_cat = form.goods_cat.join(',')
+        // 处理动态参数
+        this.manyTableData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_value: item.attr_vals.join(' ')
+          }
+          this.addForm.attrs.push(newInfo)
+        })
+        // 处理静态属性
+        this.onlyTableData.forEach(item => {
+          const newInfo = { attr_id: item.attr_id, attr_value: item.attr_vals }
+          this.addForm.attrs.push(newInfo)
+        })
+        form.attrs = this.addForm.attrs
+        console.log(form)
+
+        // 发起请求添加商品
+        // 商品的名称，必须是唯一的
+        const { data: res } = await this.$http.post('goods', form)
+
+        if (res.meta.status !== 201) {
+          return this.$message.error('添加商品失败！')
+        }
+
+        this.$message.success('添加商品成功！')
         this.$router.push('/goods')
       })
     }
